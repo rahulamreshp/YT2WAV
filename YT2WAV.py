@@ -4,20 +4,27 @@ import ssl
 from pytube import YouTube
 import moviepy.editor as mp
 import psutil
+import re
 
 ssl._create_default_https_context = ssl._create_unverified_context
 YouTube.DEFAULT_RETRIES = 5
 YouTube.DEFAULT_CA_CERTS_PATH = certifi.where()
 
 
+def clean_filename(filename):
+    cleaned_filename = re.sub(r'[\\/:*?"<>|@!#$%^&*]', '_', filename)
+    return cleaned_filename
+
+
 def download_and_convert(url):
     try:
         yt = YouTube(url)
         video_title = yt.title
+        cleaned_title = clean_filename(video_title)
         video_stream = yt.streams.filter(file_extension="mp4", res="360p").first()
-        mp4_file = f"{video_title}"
-        video_stream.download(filename=video_title)
-        wav_file = f"{video_title}.wav"
+        mp4_file = f"{cleaned_title}"
+        video_stream.download(filename=cleaned_title)
+        wav_file = f"{cleaned_title}.wav"
         video_clip = mp.VideoFileClip(mp4_file)
         audio_clip = video_clip.audio
         audio_clip.write_audiofile(wav_file, codec='pcm_s16le', fps=44100)
